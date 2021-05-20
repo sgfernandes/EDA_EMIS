@@ -30,6 +30,10 @@ get_ipython().system('which python; python -V;')
 # In[2]:
 
 
+"""
+TODO: ensure all libraries are installed for the correct python version
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -94,7 +98,7 @@ df_list[0].dtypes
 
 # ## Glimpse of the data
 
-# In[43]:
+# In[7]:
 
 
 from functools import reduce
@@ -106,7 +110,7 @@ display(df_merged.describe())
 # df_merged.head()
 
 
-# In[47]:
+# In[9]:
 
 
 # Create directory for output
@@ -124,7 +128,7 @@ for elem in df_list:
 df_merged.describe().to_csv(sum_dir + "desc_" + "full_folder.csv")
 
 
-# In[45]:
+# In[10]:
 
 
 # Calculate number of unique meters in the dataset
@@ -135,7 +139,7 @@ num_unique_meters = len(df_set)
 num_unique_meters
 
 
-# In[9]:
+# In[11]:
 
 
 # Memory requirements
@@ -143,7 +147,7 @@ df_merged.info()
 df_merged.head()
 
 
-# In[10]:
+# In[12]:
 
 
 import pandas as pd
@@ -279,14 +283,14 @@ def eda(df):
     time_series_plot(df)
 
 
-# In[11]:
+# In[13]:
 
 
 # EDA DEMO
 eda(df_list[0])
 
 
-# In[12]:
+# In[14]:
 
 
 corr = df_list[0].corr()
@@ -295,6 +299,12 @@ plt.figure(figsize = (20, 8))
 # Heatmap of correlations
 sns.heatmap(corr, cmap = plt.cm.RdYlBu_r, vmin = -0.25, annot = True, vmax = 0.6)
 plt.title('Correlation Heatmap');
+
+
+# In[ ]:
+
+
+
 
 
 # Pearson correlation coefficient between every variable and the target using the .corr dataframe method.
@@ -309,7 +319,7 @@ plt.title('Correlation Heatmap');
 
 # ## Mean Meter Reading by Hour and Day for entire dataset
 
-# In[13]:
+# In[22]:
 
 
 fig, axes = plt.subplots(1, 1, figsize=(14, 6), dpi=100)
@@ -325,7 +335,7 @@ axes.legend();
 
 # ### Visualize Missing Data and Zeroes
 
-# In[14]:
+# In[ ]:
 
 
 # generate an uncleaned version of df_merged
@@ -340,7 +350,7 @@ train = train.fillna(0)
 train.info()
 
 
-# In[15]:
+# In[ ]:
 
 
 train.eLoad = train.eLoad.astype(int)
@@ -351,7 +361,7 @@ train.head(5)
 # ### Examine Missing Values
 # Number and percentage of missing values in each column
 
-# In[16]:
+# In[ ]:
 
 
 total = train.isnull().sum().sort_values(ascending = False)
@@ -360,13 +370,13 @@ missing__train_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percen
 missing__train_data.head(4)
 
 
-# In[17]:
+# In[ ]:
 
 
 train['eLoad'].hist(figsize=(16, 8))
 
 
-# In[18]:
+# In[ ]:
 
 
 def plot_dist_col(df, column):
@@ -378,14 +388,14 @@ def plot_dist_col(df, column):
     plt.show()
 
 
-# In[19]:
+# In[ ]:
 
 
 # choose your own dataframes and columns!
 plot_dist_col(df_list[10], 'eLoad')
 
 
-# In[20]:
+# In[ ]:
 
 
 # choose your own dataframes and columns!
@@ -393,12 +403,6 @@ plot_dist_col(df_merged, 'Temp')
 
 
 # ### Simple Single Series Analysis
-
-# In[21]:
-
-
-from statsmodels.tsa.seasonal import seasonal_decompose
-
 
 # In[22]:
 
@@ -445,6 +449,10 @@ fig = res.plot()
 
 # In[26]:
 
+
+"""
+TODO: ensure all libraries are installed for the appropriate version of python
+"""
 
 from matplotlib.colors import LogNorm
 get_ipython().run_line_magic('matplotlib', 'inline')
@@ -948,7 +956,7 @@ df['eLoad'] = pd.to_numeric(df['eLoad']) # convert to numeric format
 df['Temp'] = pd.to_numeric(df['Temp']) # convert to numeric format
 
 
-# In[33]:
+# In[21]:
 
 
 # Run EDA function: display information about dataset
@@ -1003,6 +1011,37 @@ range_box_plot(df)
 plot_joint_parameters_distribution(df)
 
 
+# In[20]:
+
+
+
+
+
+# In[ ]:
+
+
+fig, axes = plt.subplots(80,2,figsize=(25,50), dpi=80)
+for i in range(df['id'].nunique()):
+    df[df['id'] == i][['Time', 'eLoad']].set_index('Time').resample('H').mean()['eLoad'].plot(ax=axes[i//2][i%2],label='By hour', alpha=0.8, color='tab:blue',fontsize=4).set_ylabel('Mean meter reading', fontsize=4);
+    df[df['id'] == i][['Time', 'eLoad']].set_index('Time').resample('D').mean()['eLoad'].plot(ax=axes[i//2][i%2],label='By day', alpha=1, color='tab:orange',fontsize=4).set_xlabel('');
+    axes[i//2][i%2].legend();
+    axes[i//2][i%2].set_title('site_id {}'.format(i), fontsize=8);
+    plt.subplots_adjust(hspace=0.45)
+    plt.tight_layout()
+
+
+# In[1]:
+
+
+fig, axes = plt.subplots(80,2,figsize=(14,36), dpi=100)
+for i in range(df['id'].nunique()):
+    df[df['id'] == i][['time', 'eload']].set_index('time').plot(ax=axes[i//2][i%2], alpha=0.8, label='By hour', color='tab:blue').set_ylabel('Meter reading', fontsize=5);
+    #df[df['id'] == i][['time', 'temp']].set_index('temp').plot(ax=axes[i%8][i//8], alpha=1, label='By day', color='tab:orange').set_xlabel('');
+    axes[i//2][i%2].legend();
+    axes[i//2][i%2].set_title('site_id {}'.format(i), fontsize=4);
+    plt.subplots_adjust(hspace=0.45)
+
+
 # In[ ]:
 
 
@@ -1013,10 +1052,4 @@ TODO: make sure that MikTex is installed on your computer
 """ 
 
 pdf_summary(df)
-
-
-# In[ ]:
-
-
-
 
