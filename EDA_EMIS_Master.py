@@ -20,14 +20,14 @@
 
 # # Import necessary libraries
 
-# In[1]:
+# In[95]:
 
 
 # Some libraries may have compatibility issues if your Python predates v3.8
 get_ipython().system('which python; python -V;')
 
 
-# In[2]:
+# In[96]:
 
 
 """
@@ -49,7 +49,7 @@ sns.set()
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[3]:
+# In[97]:
 
 
 # Print working directory
@@ -58,7 +58,7 @@ get_ipython().run_line_magic('pwd', '')
 
 # # Read in files and concatenate them all with filename in column
 
-# In[4]:
+# In[98]:
 
 
 """
@@ -66,7 +66,7 @@ TODO: - set curr_dir = pwd from the above cell
       - make sure to NOT include final backslash 
 """
 curr_dir = "/Users/abrarrahman/Downloads"
-files = glob.glob(curr_dir + '/EDA_Inputs/DC_post_12_months/*.csv')
+files = glob.glob(curr_dir + '/EDA_Inputs/DC_pre_12_months/*.csv')
 
 
 """
@@ -80,7 +80,7 @@ for i in range(len(df_list)):
 df_list[0]
 
 
-# In[5]:
+# In[99]:
 
 
 # Ensures correct datetime formatting and data type for eLoad.
@@ -90,15 +90,23 @@ for i in range(len(df_list)):
 df_list[0]
 
 
-# In[6]:
+# In[100]:
 
 
 df_list[0].dtypes
 
 
+# In[101]:
+
+
+# clear negatives
+for df in df_list:
+    df = df[(df['eLoad'] >= 0) & (df['Temp'] >= 0)]
+
+
 # ## Glimpse of the data
 
-# In[8]:
+# In[102]:
 
 
 from functools import reduce
@@ -110,7 +118,7 @@ display(df_merged.describe())
 # df_merged.head()
 
 
-# In[9]:
+# In[103]:
 
 
 # Create directory for output
@@ -128,7 +136,7 @@ for elem in df_list:
 df_merged.describe().to_csv(sum_dir + "desc_" + "full_folder.csv")
 
 
-# In[10]:
+# In[104]:
 
 
 # Calculate number of unique meters in the dataset
@@ -139,7 +147,7 @@ num_unique_meters = len(df_set)
 num_unique_meters
 
 
-# In[11]:
+# In[105]:
 
 
 # Memory requirements
@@ -147,14 +155,7 @@ df_merged.info()
 df_merged.head()
 
 
-# In[ ]:
-
-
-# TODO: remove negative values
-
-
-# In[12]:
-
+# In[106]:
 
 
 # Create directory for output
@@ -167,7 +168,7 @@ else:
     print ("Successfully created the directory %s " % sum_dir)
 
 
-# In[13]:
+# In[107]:
 
 
 import pandas as pd
@@ -305,7 +306,7 @@ def eda(df, directory):
     time_series_plot(df, directory)
 
 
-# In[14]:
+# In[ ]:
 
 
 """
@@ -523,7 +524,7 @@ from pylatex import Document, Section, Subsection, Command, Tabular,  Plot, Figu
 from pylatex.utils import italic, bold 
 
 
-# In[56]:
+# In[91]:
 
 
 # EDA information (print general EDA information or return it as a string, that will be used to generate pdf summary)
@@ -541,7 +542,7 @@ def eda_general_information(df):
     f = open(sum_dir + "eda_general_information.txt", "a")
     
     f.write('General information about the dataset \n')
-    f.write('Number of unique id: ' + str(df['id'].nunique()))
+    f.write('Number of unique id: ' + str(df['Meterid'].nunique()))
     f.write('Data parameters :')
     f.write(str(df.columns.values))
     f.write('\nTypes of data elements:')
@@ -587,7 +588,7 @@ def basic_info_str(df):
         info += str(d)
     info += ". \n\n"
 
-    info += "3. The number of unique id is " + str(df['id'].nunique()) + '. \n\n'
+    info += "3. The number of unique id is " + str(df['Meterid'].nunique()) + '. \n\n'
 
     if len(df[df.duplicated()]) > 0:
         info += "4. Number of duplicated entries is " + str(len(df[df.duplicated()])) + ".\n\n"
@@ -1104,20 +1105,14 @@ for i in range(df['id'].nunique()):
 fig.savefig(sum_dir + 'eLoad_time_subplots_II.png', dpi = 300)
 
 
-# In[85]:
+# In[94]:
 
 
 # create pdf summary
 """
 TODO: make sure that MikTex is installed on your computer 
              ->   https://miktex.org/download
-""" 
-
 """
-TODO: resolve 
-        ! LaTeX Error: File `lastpage.sty' not found.
-"""
-
 pdf_summary(df)
 
 
