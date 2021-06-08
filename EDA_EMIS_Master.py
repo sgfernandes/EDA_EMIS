@@ -66,7 +66,7 @@ TODO: - set curr_dir = pwd from the above cell
       - make sure to NOT include final backslash 
 """
 curr_dir = "/Users/abrarrahman/Downloads"
-files = glob.glob(curr_dir + '/Portal_Cleaned/DC_pre_12_months/*.csv')
+files = glob.glob(curr_dir + '/EDA_Inputs/DC_post_12_months/*.csv')
 
 
 """
@@ -98,7 +98,7 @@ df_list[0].dtypes
 
 # ## Glimpse of the data
 
-# In[7]:
+# In[8]:
 
 
 from functools import reduce
@@ -147,7 +147,27 @@ df_merged.info()
 df_merged.head()
 
 
+# In[ ]:
+
+
+# TODO: remove negative values
+
+
 # In[12]:
+
+
+
+# Create directory for output
+sum_dir = curr_dir + '/MeterPlots/'
+try:
+    os.mkdir(sum_dir)
+except OSError:
+    print ("Creation of the directory %s failed" % sum_dir)
+else:
+    print ("Successfully created the directory %s " % sum_dir)
+
+
+# In[13]:
 
 
 import pandas as pd
@@ -167,7 +187,7 @@ The EDA DEMO cell is presented only for the 0th element of df_list.
 This cell can easily be looped to run on the entire dataset.
 """
         
-def time_series_plot(df):
+def time_series_plot(df, directory):
     """Given dataframe, generate times series plot of numeric data by daily, monthly and yearly frequency"""
     print("\nTo check time series of numeric data  by daily, monthly and yearly frequency")
     if len(df.select_dtypes(include='datetime64').columns)>0:
@@ -187,10 +207,11 @@ def time_series_plot(df):
                     ax.set_ylim(bottom=0)
                     ax.get_yaxis().set_major_formatter(
                     matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+                    plt.savefig(directory + "time_series_" + p + ".png", dpi = 300)
                     plt.show()
 
                     
-def numeric_eda(df, hue=None):
+def numeric_eda(df, directory, hue=None):
     """Given dataframe, generate EDA of numeric data"""
     print("\nTo check: \nDistribution of numeric data")
     display(df.describe().T)
@@ -217,6 +238,8 @@ def numeric_eda(df, hue=None):
         sns.pairplot(df.select_dtypes(include=np.number))
     else:
         sns.pairplot(df.select_dtypes(include=np.number).join(df[[hue]]), hue=hue)
+    
+    plt.savefig(directory + "numeric_eda" + ".png", dpi = 300)
     plt.show()
 
 
@@ -230,7 +253,7 @@ def top5(df):
         print(" ")
     
     
-def categorical_eda(df, hue=None):
+def categorical_eda(df, directory, hue=None):
     """Given dataframe, generate EDA of categorical data"""
     print("\nTo check: \nUnique count of non-numeric data\n")
     print(df.select_dtypes(include=['object', 'category']).nunique())
@@ -239,10 +262,11 @@ def categorical_eda(df, hue=None):
     for col in df.select_dtypes(include='category').columns:
         fig = sns.catplot(x=col, kind="count", data=df, hue=hue)
         fig.set_xticklabels(rotation=90)
+        plt.savefig(directory + "categorical_eda" + ".png", dpi = 300)
         plt.show()
     
 
-def eda(df):
+def eda(df, directory):
     """Given dataframe, generate exploratory data analysis"""
     # check that input is pandas dataframe
     if type(df) != pd.core.frame.DataFrame:
@@ -256,7 +280,6 @@ def eda(df):
 
     print("\nTo check: \n (1) Total number of entries \n (2) Column types \n (3) Any null values\n")
     print(df.info())
-
     
     # generate preview of entries with null values
     if len(df[df.isnull().any(axis=1)] != 0):
@@ -265,7 +288,6 @@ def eda(df):
         missingno.matrix(df)
         plt.show()
     
-
     # generate count statistics of duplicate entries
     if len(df[df.duplicated()]) > 0:
         print("\n***Number of duplicated entries: ", len(df[df.duplicated()]))
@@ -274,31 +296,52 @@ def eda(df):
         print("\nNo duplicated entries found")
 
     # EDA of categorical data
-    categorical_eda(df)
+    categorical_eda(df, directory)
     
     # EDA of numeric data
-    numeric_eda(df)
+    numeric_eda(df, directory)
         
     # Plot time series plot of n
-    time_series_plot(df)
-
-
-# In[13]:
-
-
-# EDA DEMO
-eda(df_list[0])
+    time_series_plot(df, directory)
 
 
 # In[14]:
 
 
-corr = df_list[0].corr()
-plt.figure(figsize = (20, 8))
+"""
+Running comprehensive suite of EDA tools, including:
+ - total num entries
+ - column types
+ - identify null values
+ - numeric distributions
+ - OUTPUT: Joint distribution
+ - OUTPUT: time-series plots for day/month/year
+"""
+for i in range(len(df_list)):
+    directory = sum_dir + df_list[i]["Meterid"][0] +'/'
+    try:
+        os.mkdir(directory)
+    except OSError:
+        print ("Creation of the directory %s failed" % directory)
+    else:
+        print ("Successfully created the directory %s " % directory)
+        eda(df_list[i], directory)
+    
 
-# Heatmap of correlations
-sns.heatmap(corr, cmap = plt.cm.RdYlBu_r, vmin = -0.25, annot = True, vmax = 0.6)
-plt.title('Correlation Heatmap');
+
+# In[15]:
+
+
+for i in range(len(df_list)):
+    directory = sum_dir + df_list[i]["Meterid"][0] +'/'
+    
+    corr = df_list[i].corr()
+    plt.figure(figsize = (20, 8))
+
+    # Heatmap of correlations
+    sns.heatmap(corr, cmap = plt.cm.RdYlBu_r, vmin = -0.25, annot = True, vmax = 0.6)
+    plt.title('Correlation Heatmap');
+    plt.savefig(directory + "correlation_heatmap_temp_eload" + ".png", dpi = 300)
 
 
 # In[ ]:
@@ -319,13 +362,15 @@ plt.title('Correlation Heatmap');
 
 # ## Mean Meter Reading by Hour and Day for entire dataset
 
-# In[22]:
+# In[16]:
 
 
 fig, axes = plt.subplots(1, 1, figsize=(14, 6), dpi=100)
 df_merged[['Time', 'eLoad']].set_index('Time').resample('H').mean()['eLoad'].plot(ax=axes, label='By hour', alpha=0.8).set_ylabel('Meter reading', fontsize=14);
 df_merged[['Time', 'eLoad']].set_index('Time').resample('D').mean()['eLoad'].plot(ax=axes, label='By day', alpha=1).set_ylabel('Meter reading', fontsize=14);
 axes.set_title('Mean meter reading by hour and day', fontsize=16);
+
+plt.savefig(sum_dir + "mean_meter_hr_day_full_dataset" + ".png", dpi = 300)
 axes.legend();
 
 
@@ -335,7 +380,7 @@ axes.legend();
 
 # ### Visualize Missing Data and Zeroes
 
-# In[ ]:
+# In[17]:
 
 
 # generate an uncleaned version of df_merged
@@ -350,7 +395,7 @@ train = train.fillna(0)
 train.info()
 
 
-# In[ ]:
+# In[18]:
 
 
 train.eLoad = train.eLoad.astype(int)
@@ -361,7 +406,7 @@ train.head(5)
 # ### Examine Missing Values
 # Number and percentage of missing values in each column
 
-# In[ ]:
+# In[19]:
 
 
 total = train.isnull().sum().sort_values(ascending = False)
@@ -370,44 +415,47 @@ missing__train_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percen
 missing__train_data.head(4)
 
 
-# In[ ]:
+# In[20]:
 
 
 train['eLoad'].hist(figsize=(16, 8))
 
 
-# In[ ]:
+# In[21]:
 
 
-def plot_dist_col(df, column):
+def plot_dist_col(df, column, directory):
     '''plot dist curves for train and test weather data for the given df column name'''
     fig, ax = plt.subplots(figsize=(10, 10))
     sns.distplot(df[column].dropna(), color='green', ax=ax).set_title(column, fontsize=16)
     plt.xlabel(column, fontsize=15)
     plt.legend([column])
+    plt.savefig(directory + column +"_dist_curve" + ".png", dpi = 300)
     plt.show()
 
-
-# In[ ]:
-
-
-# choose your own dataframes and columns!
-plot_dist_col(df_list[10], 'eLoad')
-
-
-# In[ ]:
-
-
-# choose your own dataframes and columns!
-plot_dist_col(df_merged, 'Temp')
-
-
-# ### Simple Single Series Analysis
 
 # In[22]:
 
 
-# choose your own dataframe
+# distributions for eLoads
+for i in range(len(df_list)):
+    directory = sum_dir + df_list[i]["Meterid"][0] +'/' 
+    plot_dist_col(df_list[i], 'eLoad', directory)
+
+
+# In[23]:
+
+
+# distributions for temperatures
+for i in range(len(df_list)):
+    directory = sum_dir + df_list[i]["Meterid"][0] +'/' 
+    plot_dist_col(df_merged, 'Temp', directory)
+
+
+# ### Simple Single Series Analysis
+
+# In[27]:
+
 
 ts = df_list[10].groupby(["Time"])["eLoad"].sum()
 ts.astype('float')
@@ -415,19 +463,22 @@ plt.figure(figsize=(16,8))
 plt.title('meter_reading')
 plt.xlabel('timestamp')
 plt.ylabel('meter_reading')
-plt.plot(ts);
 
-
-# In[23]:
-
-
-plt.figure(figsize=(16,6))
 plt.plot(ts.rolling(window=12,center=False).mean(),label='Rolling Mean');
 plt.plot(ts.rolling(window=12,center=False).std(),label='Rolling sd');
 plt.legend();
+    
+plt.plot(ts);
+plt.savefig(sum_dir +"single_series_reading" + ".png", dpi = 300)
 
 
-# In[24]:
+# In[ ]:
+
+
+
+
+
+# In[30]:
 
 
 import statsmodels.api as sm
@@ -435,19 +486,21 @@ import statsmodels.api as sm
 # Multiplicative
 res = sm.tsa.seasonal_decompose(ts.values,freq=12, model="multiplicative")
 fig = res.plot()
+fig.savefig(sum_dir +"seasonal_multiplicative" + ".png", dpi = 300) 
 
 
-# In[25]:
+# In[31]:
 
 
 # Additive model
 res = sm.tsa.seasonal_decompose(ts.values,freq=12,model="additive")
 fig = res.plot()
+fig.savefig(sum_dir +"seasonal_additive" + ".png", dpi = 300) 
 
 
 # ## Time Series EDA Extension
 
-# In[26]:
+# In[32]:
 
 
 """
@@ -462,7 +515,7 @@ from scipy.interpolate import interp1d
 get_ipython().system('pip3 install pylatex # install pylatex package, if it was not installed before')
 
 
-# In[27]:
+# In[33]:
 
 
 # import nessesary function from pylatex 
@@ -470,7 +523,7 @@ from pylatex import Document, Section, Subsection, Command, Tabular,  Plot, Figu
 from pylatex.utils import italic, bold 
 
 
-# In[28]:
+# In[56]:
 
 
 # EDA information (print general EDA information or return it as a string, that will be used to generate pdf summary)
@@ -484,33 +537,37 @@ def eda_general_information(df):
     # check that input is pandas dataframe
     if type(df) != pd.core.frame.DataFrame:
         raise TypeError("Only pandas dataframe is allowed as input")
+        
+    f = open(sum_dir + "eda_general_information.txt", "a")
+    
+    f.write('General information about the dataset \n')
+    f.write('Number of unique id: ' + str(df['id'].nunique()))
+    f.write('Data parameters :')
+    f.write(str(df.columns.values))
+    f.write('\nTypes of data elements:')
+    f.write(str(df.dtypes))
+    f.write('\nInformation about the dataframe: ')
+    f.write(str(df.info()))
+    f.write('\nDataframe: ')
+    f.write(str(df.head()))
+    f.write("\n")
 
-    print('General information about the dataset \n')
-    print('Number of unique id: ', df['id'].nunique())
-    print('Data parameters :')
-    print(df.columns.values)
-    print('\nTypes of data elements:')
-    print(df.dtypes)
-    print('\nInformation about the dataframe: ')
-    print(df.info())
-    print('\nDataframe: ')
-    print(df.head())
-    print()
-
-    print("\nDistribution of numeric data")
-    print(df.describe().T)
+    f.write("\nDistribution of numeric data")
+    f.write(str(df.describe().T))
 
     # generate preview of entries with null values
     if len(df[df.isnull().any(axis=1)] != 0):
-        print("\nPreview of data with null values:")
-        print(df[df.isnull().any(axis=1)].head(3))
+        f.write("\nPreview of data with null values:")
+        f.write(str(df[df.isnull().any(axis=1)].head(3)))
 
     # generate count statistics of duplicate entries
     if len(df[df.duplicated()]) > 0:
-        print("\n***Number of duplicated entries: ", len(df[df.duplicated()]))
-        print(df[df.duplicated(keep=False)].sort_values(by=list(df.columns)).head())
+        f.write("\n***Number of duplicated entries: " + str(len(df[df.duplicated()])))
+        f.write(str(df[df.duplicated(keep=False)].sort_values(by=list(df.columns)).head()))
     else:
-        print("\nNo duplicated entries found")
+        f.write("\nNo duplicated entries found")  
+    
+    f.close()
 
 
 def basic_info_str(df):
@@ -540,7 +597,7 @@ def basic_info_str(df):
     return info
 
 
-# In[29]:
+# In[57]:
 
 
 # Utilities that uses in several functions below 
@@ -563,7 +620,7 @@ def full_statistics(data):
     return  [round(mean, 2), round(std, 2), round(min(data), 2), round(max(data), 2)]
 
 
-# In[30]:
+# In[70]:
 
 
 # EDA plots 
@@ -600,7 +657,7 @@ def time_series_plot(df):
                 ax.legend(fontsize = 14)
                 ax.tick_params(axis='both', which='major', labelsize=10)
 
-                fig.savefig(parameter + '.png', dpi = 300)
+                fig.savefig(sum_dir + parameter + "_mean_dist"+'.png', dpi = 300)
                 plt.show()
                 plt.close()
 
@@ -642,7 +699,7 @@ def plot_histograms(df, log = False, show_kde = False):
                 plt.suptitle('Distribution of ' + parameter, fontsize = 20, fontweight = 'bold')
                 ax.tick_params(axis='both', which='major', labelsize=12)
 
-                fig.savefig(name + '_histogram.png', dpi = 300)
+                fig.savefig(sum_dir + name + '_histogram.png', dpi = 300)
                 plt.show()
                 plt.close()
 
@@ -687,7 +744,7 @@ def plot_distribution_by_id(df, log = False, interpolate = False):
             plt.suptitle('Distribution of average ' + parameter + ' by id ', fontsize = 20, fontweight = 'bold')
             ax.tick_params(axis='both', which='major', labelsize=12)
 
-            fig.savefig(name + '_id_distribution.png', dpi = 300)
+            fig.savefig(sum_dir+name + '_id_distribution.png', dpi = 300)
             plt.show()
             plt.close()
         
@@ -718,7 +775,7 @@ def plot_correlation_map(df):
     plt.title('Correlations Heatmap', fontsize = 16, fontweight = 'bold', pad = 10)
     fig.tight_layout() 
 
-    fig.savefig('correlations.png', dpi = 300)
+    fig.savefig(sum_dir + 'triple_correlations.png', dpi = 300)
     plt.show()
     plt.close()
 
@@ -750,7 +807,7 @@ def range_box_plot(df):
     plt.tick_params(axis='both', which='major', labelsize=14)
     fig.tight_layout()
     
-    fig.savefig('boxplots.png', dpi = 300)
+    fig.savefig(sum_dir +'range_boxplots.png', dpi = 300)
     plt.show()
     plt.close()
     
@@ -790,7 +847,7 @@ def plot_joint_parameters_distribution(df):
             if i == 0:
                 axs[j, i].set_ylabel(parameter2, fontsize = 14, fontweight = 'bold')
             else:
-                axs[j, i].axes.get_yaxis().set_visible(False)
+                axs[j, i].axes.get_yaxis().set_visible(False) 
             if j == L-1:
                 axs[j, i].set_xlabel(parameter1, fontsize = 14, fontweight = 'bold')
             else:
@@ -799,12 +856,12 @@ def plot_joint_parameters_distribution(df):
     plt.subplots_adjust(wspace = 0.1, hspace = 0.1)
     plt.suptitle('Distirubution of Numeric Parameters', fontsize = 16, fontweight = 'bold', y = 0.93)
 
-    fig.savefig('joint_distribution.png', dpi = 300)
+    fig.savefig(sum_dir+'joint_distribution.png', dpi = 300)
     plt.show()
     plt.close()
 
 
-# In[31]:
+# In[84]:
 
 
 # Function that saves EDA information and plots to pdf file
@@ -933,10 +990,10 @@ def pdf_summary(df):
             joint_plot.add_caption('Distribution of parameters. Histograms of each single parameter and joint distribution of each pair of parameters (the id of data file is also considered).')
 
 
-    doc.generate_pdf(clean_tex=False, compiler='pdflatex')
+    doc.generate_pdf(filepath=sum_dir, clean_tex=False, compiler='pdflatex')
 
 
-# In[32]:
+# In[60]:
 
 
 # Processing data for peak prediction task
@@ -956,15 +1013,14 @@ df['eLoad'] = pd.to_numeric(df['eLoad']) # convert to numeric format
 df['Temp'] = pd.to_numeric(df['Temp']) # convert to numeric format
 
 
-# In[21]:
+# In[61]:
 
 
 # Run EDA function: display information about dataset
+eda_general_information(df)
 
-eda_general_information(df) 
 
-
-# In[34]:
+# In[65]:
 
 
 # Run EDA function that visialize data properties 
@@ -973,7 +1029,7 @@ eda_general_information(df)
 time_series_plot(df)
 
 
-# In[35]:
+# In[67]:
 
 
 # 2. plot histograms of parameters distribution
@@ -983,28 +1039,28 @@ plot_histograms(df, show_kde = False, log = True)
 plot_histograms(df, show_kde = True, log = False)
 
 
-# In[36]:
+# In[69]:
 
 
 # 3. plot histogram of parameters distribution by id
 plot_distribution_by_id(df, interpolate = True)
 
 
-# In[37]:
+# In[71]:
 
 
 # 4. plot correlation coefficients between data parameters  
 plot_correlation_map(df)
 
 
-# In[38]:
+# In[72]:
 
 
 #5. plot parameters range (mean plus/minus standard deviation, minimum, maximum)
 range_box_plot(df)
 
 
-# In[39]:
+# In[73]:
 
 
 #6. plot joint distribution of all numeric parameters 
@@ -1017,8 +1073,10 @@ plot_joint_parameters_distribution(df)
 
 
 
-# In[ ]:
+# In[77]:
 
+
+# TODO: Fix spacing/readability
 
 fig, axes = plt.subplots(80,2,figsize=(25,50), dpi=80)
 for i in range(df['id'].nunique()):
@@ -1028,21 +1086,25 @@ for i in range(df['id'].nunique()):
     axes[i//2][i%2].set_title('site_id {}'.format(i), fontsize=8);
     plt.subplots_adjust(hspace=0.45)
     plt.tight_layout()
+fig.savefig(sum_dir + 'eLoad_time_subplots.png', dpi = 300)
 
 
-# In[1]:
+# In[81]:
 
+
+# TODO: Fix spacing/readability
 
 fig, axes = plt.subplots(80,2,figsize=(14,36), dpi=100)
 for i in range(df['id'].nunique()):
-    df[df['id'] == i][['time', 'eload']].set_index('time').plot(ax=axes[i//2][i%2], alpha=0.8, label='By hour', color='tab:blue').set_ylabel('Meter reading', fontsize=5);
-    #df[df['id'] == i][['time', 'temp']].set_index('temp').plot(ax=axes[i%8][i//8], alpha=1, label='By day', color='tab:orange').set_xlabel('');
+    df[df['id'] == i][['Time', 'eLoad']].set_index('Time').plot(ax=axes[i//2][i%2], alpha=0.8, label='By hour', color='tab:blue').set_ylabel('Meter reading', fontsize=5);
+    #df[df['id'] == i][['Time', 'Temp']].set_index('Temp').plot(ax=axes[i%8][i//8], alpha=1, label='By day', color='tab:orange').set_xlabel('');
     axes[i//2][i%2].legend();
     axes[i//2][i%2].set_title('site_id {}'.format(i), fontsize=4);
     plt.subplots_adjust(hspace=0.45)
+fig.savefig(sum_dir + 'eLoad_time_subplots_II.png', dpi = 300)
 
 
-# In[ ]:
+# In[85]:
 
 
 # create pdf summary
@@ -1051,5 +1113,16 @@ TODO: make sure that MikTex is installed on your computer
              ->   https://miktex.org/download
 """ 
 
+"""
+TODO: resolve 
+        ! LaTeX Error: File `lastpage.sty' not found.
+"""
+
 pdf_summary(df)
+
+
+# In[ ]:
+
+
+
 
