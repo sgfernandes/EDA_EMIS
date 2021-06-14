@@ -27,7 +27,7 @@
 get_ipython().system('which python; python -V;')
 
 
-# In[96]:
+# In[3]:
 
 
 """
@@ -49,7 +49,7 @@ sns.set()
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[97]:
+# In[1]:
 
 
 # Print working directory
@@ -58,15 +58,15 @@ get_ipython().run_line_magic('pwd', '')
 
 # # Read in files and concatenate them all with filename in column
 
-# In[98]:
+# In[4]:
 
 
 """
 TODO: - set curr_dir = pwd from the above cell
       - make sure to NOT include final backslash 
 """
-curr_dir = "/Users/abrarrahman/Downloads"
-files = glob.glob(curr_dir + '/EDA_Inputs/DC_pre_12_months/*.csv')
+curr_dir = '/Users/samwise/Downloads/EDA_EMIS-main 3'
+files = glob.glob(curr_dir + '/DC/pre_12_months/*.csv')
 
 
 """
@@ -80,7 +80,7 @@ for i in range(len(df_list)):
 df_list[0]
 
 
-# In[99]:
+# In[5]:
 
 
 # Ensures correct datetime formatting and data type for eLoad.
@@ -96,7 +96,7 @@ df_list[0]
 df_list[0].dtypes
 
 
-# In[101]:
+# In[6]:
 
 
 # clear negatives
@@ -106,7 +106,7 @@ for df in df_list:
 
 # ## Glimpse of the data
 
-# In[102]:
+# In[7]:
 
 
 from functools import reduce
@@ -118,10 +118,10 @@ display(df_merged.describe())
 # df_merged.head()
 
 
-# In[103]:
+# In[11]:
 
 
-# Create directory for output
+# Create directory for output of meter summaries
 sum_dir = curr_dir + '/MeterSummaries/'
 try:
     os.mkdir(sum_dir)
@@ -136,7 +136,13 @@ for elem in df_list:
 df_merged.describe().to_csv(sum_dir + "desc_" + "full_folder.csv")
 
 
-# In[104]:
+# In[ ]:
+
+
+## TODO 6/14: Provide list of meters that have average daily eload>480kWh
+
+
+# In[8]:
 
 
 # Calculate number of unique meters in the dataset
@@ -155,7 +161,7 @@ df_merged.info()
 df_merged.head()
 
 
-# In[106]:
+# In[12]:
 
 
 # Create directory for output
@@ -168,7 +174,7 @@ else:
     print ("Successfully created the directory %s " % sum_dir)
 
 
-# In[107]:
+# In[9]:
 
 
 import pandas as pd
@@ -307,6 +313,12 @@ def eda(df, directory):
 
 
 # In[ ]:
+
+
+### TODO 6/14  (nice to have)  Do not display cumulative Temperature plots. 
+
+
+# In[13]:
 
 
 """
@@ -1021,15 +1033,6 @@ df['Temp'] = pd.to_numeric(df['Temp']) # convert to numeric format
 eda_general_information(df)
 
 
-# In[65]:
-
-
-# Run EDA function that visialize data properties 
-
-# 1. plot time series for each parameter
-time_series_plot(df)
-
-
 # In[67]:
 
 
@@ -1044,34 +1047,7 @@ plot_histograms(df, show_kde = True, log = False)
 
 
 # 3. plot histogram of parameters distribution by id
-plot_distribution_by_id(df, interpolate = True)
-
-
-# In[71]:
-
-
-# 4. plot correlation coefficients between data parameters  
-plot_correlation_map(df)
-
-
-# In[72]:
-
-
-#5. plot parameters range (mean plus/minus standard deviation, minimum, maximum)
-range_box_plot(df)
-
-
-# In[73]:
-
-
-#6. plot joint distribution of all numeric parameters 
-plot_joint_parameters_distribution(df)
-
-
-# In[20]:
-
-
-
+plot_distribution_by_id(df, interpolate = True)    #### TODO 6/14: PLEASE SEE IF IT CAN BE ORDERED IN DESCENDING ORDER OF Average eload
 
 
 # In[77]:
@@ -1114,6 +1090,12 @@ TODO: make sure that MikTex is installed on your computer
              ->   https://miktex.org/download
 """
 pdf_summary(df)
+
+
+# In[14]:
+
+
+get_ipython().system('jupyter nbconvert --to script config_template.ipynb')
 
 
 # In[ ]:
