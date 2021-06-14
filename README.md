@@ -1,6 +1,6 @@
 # EDA_EMIS
 
-This repository serves to perform exploratory data analysis (EDA) on electrical grid data. Given a folder of CSVs containing columns for time, eLoad, temperature, and meter id, the Jupyter Notebook will produce a number of graphs as intermediate steps as well as a folder of summary statistics for each meter.
+This repository serves to perform exploratory data analysis (EDA) on time series data from smart meters in a building. Given a folder of CSVs containing columns for time, eload, temperature, and meter id, the Jupyter Notebook will produce a number of graphs as intermediate steps as well as a folder of summary statistics for each meter.
 
 In order to run the notebook successfully:
 + Make sure you have all the correct libraries downloaded for the relevant version of python
