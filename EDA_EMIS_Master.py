@@ -20,14 +20,14 @@
 
 # # Import necessary libraries
 
-# In[95]:
+# In[7]:
 
 
 # Some libraries may have compatibility issues if your Python predates v3.8
 get_ipython().system('which python; python -V;')
 
 
-# In[96]:
+# In[8]:
 
 
 """
@@ -49,7 +49,7 @@ sns.set()
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[97]:
+# In[9]:
 
 
 # Print working directory
@@ -58,7 +58,7 @@ get_ipython().run_line_magic('pwd', '')
 
 # # Read in files and concatenate them all with filename in column
 
-# In[98]:
+# In[82]:
 
 
 """
@@ -66,11 +66,9 @@ TODO: - set curr_dir = pwd from the above cell
       - make sure to NOT include final backslash 
 """
 curr_dir = "/Users/abrarrahman/Downloads"
-files = glob.glob(curr_dir + '/EDA_Inputs/DC_pre_12_months/*.csv')
-
+files = glob.glob(curr_dir + '/EDA_Inputs/DC_post_12_months/*.csv')
 
 """
-For Vermont, Seattle, and DC (LBL Dataset)
 Creates a list of dataframes, where each represents a specific meter
 """
 df_list = [pd.read_csv(fp,skiprows=2).assign(Meterid=os.path.basename(fp)) for fp in files]
@@ -80,7 +78,7 @@ for i in range(len(df_list)):
 df_list[0]
 
 
-# In[99]:
+# In[83]:
 
 
 # Ensures correct datetime formatting and data type for eLoad.
@@ -90,13 +88,13 @@ for i in range(len(df_list)):
 df_list[0]
 
 
-# In[100]:
+# In[84]:
 
 
 df_list[0].dtypes
 
 
-# In[101]:
+# In[85]:
 
 
 # clear negatives
@@ -106,7 +104,7 @@ for df in df_list:
 
 # ## Glimpse of the data
 
-# In[102]:
+# In[86]:
 
 
 from functools import reduce
@@ -118,7 +116,7 @@ display(df_merged.describe())
 # df_merged.head()
 
 
-# In[103]:
+# In[299]:
 
 
 # Create directory for output
@@ -136,7 +134,7 @@ for elem in df_list:
 df_merged.describe().to_csv(sum_dir + "desc_" + "full_folder.csv")
 
 
-# In[104]:
+# In[300]:
 
 
 # Calculate number of unique meters in the dataset
@@ -147,7 +145,7 @@ num_unique_meters = len(df_set)
 num_unique_meters
 
 
-# In[105]:
+# In[301]:
 
 
 # Memory requirements
@@ -155,7 +153,27 @@ df_merged.info()
 df_merged.head()
 
 
-# In[106]:
+# In[87]:
+
+
+eLoad_minimum = 480   # TODO: Users can supply their own eLoad minimums!
+sum_dir = curr_dir + '/MeterSummaries/'
+dfs_achieving_min = dict()
+
+for elem in df_list:
+    elem_avg = elem["eLoad"].mean()
+    if elem_avg > eLoad_minimum:
+        dfs_achieving_min[elem['Meterid'][0]] = [elem_avg]
+        
+if len(dfs_achieving_min): 
+    eLoads_over = pd.DataFrame(dfs_achieving_min).T
+    eLoads_over.columns = ["Mean eLoad"]
+    eLoads_over.to_csv(sum_dir + "eLoads_over_" + str(eLoad_minimum) + "kwh.csv")
+else:
+    print("No meters meet the requested minimum eLoad!")
+
+
+# In[302]:
 
 
 # Create directory for output
@@ -168,7 +186,7 @@ else:
     print ("Successfully created the directory %s " % sum_dir)
 
 
-# In[107]:
+# In[303]:
 
 
 import pandas as pd
@@ -302,11 +320,11 @@ def eda(df, directory):
     # EDA of numeric data
     numeric_eda(df, directory)
         
-    # Plot time series plot of n
-    time_series_plot(df, directory)
+    # Plot time series
+    time_series_plot(df, directory) # TODO 6/14  (nice to have)  Do not display cumulative Temperature plots. 
 
 
-# In[ ]:
+# In[304]:
 
 
 """
@@ -330,11 +348,12 @@ for i in range(len(df_list)):
     
 
 
-# In[15]:
+# In[305]:
 
 
 for i in range(len(df_list)):
     directory = sum_dir + df_list[i]["Meterid"][0] +'/'
+    print(directory)
     
     corr = df_list[i].corr()
     plt.figure(figsize = (20, 8))
@@ -343,12 +362,6 @@ for i in range(len(df_list)):
     sns.heatmap(corr, cmap = plt.cm.RdYlBu_r, vmin = -0.25, annot = True, vmax = 0.6)
     plt.title('Correlation Heatmap');
     plt.savefig(directory + "correlation_heatmap_temp_eload" + ".png", dpi = 300)
-
-
-# In[ ]:
-
-
-
 
 
 # Pearson correlation coefficient between every variable and the target using the .corr dataframe method.
@@ -363,7 +376,7 @@ for i in range(len(df_list)):
 
 # ## Mean Meter Reading by Hour and Day for entire dataset
 
-# In[16]:
+# In[306]:
 
 
 fig, axes = plt.subplots(1, 1, figsize=(14, 6), dpi=100)
@@ -381,7 +394,7 @@ axes.legend();
 
 # ### Visualize Missing Data and Zeroes
 
-# In[17]:
+# In[307]:
 
 
 # generate an uncleaned version of df_merged
@@ -396,7 +409,7 @@ train = train.fillna(0)
 train.info()
 
 
-# In[18]:
+# In[308]:
 
 
 train.eLoad = train.eLoad.astype(int)
@@ -407,7 +420,7 @@ train.head(5)
 # ### Examine Missing Values
 # Number and percentage of missing values in each column
 
-# In[19]:
+# In[309]:
 
 
 total = train.isnull().sum().sort_values(ascending = False)
@@ -416,13 +429,13 @@ missing__train_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percen
 missing__train_data.head(4)
 
 
-# In[20]:
+# In[310]:
 
 
 train['eLoad'].hist(figsize=(16, 8))
 
 
-# In[21]:
+# In[311]:
 
 
 def plot_dist_col(df, column, directory):
@@ -435,7 +448,7 @@ def plot_dist_col(df, column, directory):
     plt.show()
 
 
-# In[22]:
+# In[312]:
 
 
 # distributions for eLoads
@@ -444,7 +457,7 @@ for i in range(len(df_list)):
     plot_dist_col(df_list[i], 'eLoad', directory)
 
 
-# In[23]:
+# In[313]:
 
 
 # distributions for temperatures
@@ -455,7 +468,7 @@ for i in range(len(df_list)):
 
 # ### Simple Single Series Analysis
 
-# In[27]:
+# In[314]:
 
 
 ts = df_list[10].groupby(["Time"])["eLoad"].sum()
@@ -473,13 +486,7 @@ plt.plot(ts);
 plt.savefig(sum_dir +"single_series_reading" + ".png", dpi = 300)
 
 
-# In[ ]:
-
-
-
-
-
-# In[30]:
+# In[315]:
 
 
 import statsmodels.api as sm
@@ -490,7 +497,7 @@ fig = res.plot()
 fig.savefig(sum_dir +"seasonal_multiplicative" + ".png", dpi = 300) 
 
 
-# In[31]:
+# In[316]:
 
 
 # Additive model
@@ -501,7 +508,7 @@ fig.savefig(sum_dir +"seasonal_additive" + ".png", dpi = 300)
 
 # ## Time Series EDA Extension
 
-# In[32]:
+# In[317]:
 
 
 """
@@ -516,7 +523,7 @@ from scipy.interpolate import interp1d
 get_ipython().system('pip3 install pylatex # install pylatex package, if it was not installed before')
 
 
-# In[33]:
+# In[318]:
 
 
 # import nessesary function from pylatex 
@@ -524,7 +531,7 @@ from pylatex import Document, Section, Subsection, Command, Tabular,  Plot, Figu
 from pylatex.utils import italic, bold 
 
 
-# In[91]:
+# In[319]:
 
 
 # EDA information (print general EDA information or return it as a string, that will be used to generate pdf summary)
@@ -532,7 +539,6 @@ from pylatex.utils import italic, bold
 
 
 def eda_general_information(df):
-
     """Given dataframe print general information about the data and dataframe. """
 
     # check that input is pandas dataframe
@@ -598,7 +604,7 @@ def basic_info_str(df):
     return info
 
 
-# In[57]:
+# In[320]:
 
 
 # Utilities that uses in several functions below 
@@ -621,7 +627,7 @@ def full_statistics(data):
     return  [round(mean, 2), round(std, 2), round(min(data), 2), round(max(data), 2)]
 
 
-# In[70]:
+# In[321]:
 
 
 # EDA plots 
@@ -708,7 +714,8 @@ def plot_histograms(df, log = False, show_kde = False):
 def plot_distribution_by_id(df, log = False, interpolate = False):
     
     """ Given dataframe, plot histogram of parameters distribution by id """
-
+    # TODO: please see if we can order in descending order of average eLoad
+    
     if len(df.select_dtypes(include='datetime64').columns)>0:
 
         df2 = df.groupby('id').mean().reset_index()
@@ -862,7 +869,7 @@ def plot_joint_parameters_distribution(df):
     plt.close()
 
 
-# In[84]:
+# In[322]:
 
 
 # Function that saves EDA information and plots to pdf file
@@ -994,7 +1001,7 @@ def pdf_summary(df):
     doc.generate_pdf(filepath=sum_dir, clean_tex=False, compiler='pdflatex')
 
 
-# In[60]:
+# In[323]:
 
 
 # Processing data for peak prediction task
@@ -1014,14 +1021,14 @@ df['eLoad'] = pd.to_numeric(df['eLoad']) # convert to numeric format
 df['Temp'] = pd.to_numeric(df['Temp']) # convert to numeric format
 
 
-# In[61]:
+# In[324]:
 
 
 # Run EDA function: display information about dataset
 eda_general_information(df)
 
 
-# In[65]:
+# In[325]:
 
 
 # Run EDA function that visialize data properties 
@@ -1030,7 +1037,7 @@ eda_general_information(df)
 time_series_plot(df)
 
 
-# In[67]:
+# In[326]:
 
 
 # 2. plot histograms of parameters distribution
@@ -1040,44 +1047,38 @@ plot_histograms(df, show_kde = False, log = True)
 plot_histograms(df, show_kde = True, log = False)
 
 
-# In[69]:
+# In[327]:
 
 
 # 3. plot histogram of parameters distribution by id
 plot_distribution_by_id(df, interpolate = True)
 
 
-# In[71]:
+# In[328]:
 
 
 # 4. plot correlation coefficients between data parameters  
 plot_correlation_map(df)
 
 
-# In[72]:
+# In[329]:
 
 
 #5. plot parameters range (mean plus/minus standard deviation, minimum, maximum)
 range_box_plot(df)
 
 
-# In[73]:
+# In[330]:
 
 
 #6. plot joint distribution of all numeric parameters 
 plot_joint_parameters_distribution(df)
 
 
-# In[20]:
+# In[331]:
 
 
-
-
-
-# In[77]:
-
-
-# TODO: Fix spacing/readability
+# TODO 6/14: Fix spacing/readability
 
 fig, axes = plt.subplots(80,2,figsize=(25,50), dpi=80)
 for i in range(df['id'].nunique()):
@@ -1090,12 +1091,12 @@ for i in range(df['id'].nunique()):
 fig.savefig(sum_dir + 'eLoad_time_subplots.png', dpi = 300)
 
 
-# In[81]:
+# In[332]:
 
 
 # TODO: Fix spacing/readability
 
-fig, axes = plt.subplots(80,2,figsize=(14,36), dpi=100)
+fig, axes = plt.subplots(80,2,figsize=(14,50), dpi=100)
 for i in range(df['id'].nunique()):
     df[df['id'] == i][['Time', 'eLoad']].set_index('Time').plot(ax=axes[i//2][i%2], alpha=0.8, label='By hour', color='tab:blue').set_ylabel('Meter reading', fontsize=5);
     #df[df['id'] == i][['Time', 'Temp']].set_index('Temp').plot(ax=axes[i%8][i//8], alpha=1, label='By day', color='tab:orange').set_xlabel('');
@@ -1105,7 +1106,7 @@ for i in range(df['id'].nunique()):
 fig.savefig(sum_dir + 'eLoad_time_subplots_II.png', dpi = 300)
 
 
-# In[94]:
+# In[251]:
 
 
 # create pdf summary
